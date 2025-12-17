@@ -4,4 +4,6 @@ pandas
 numpy
 python-multipart
 openpyxl
+joblib
+scikit-learn
 

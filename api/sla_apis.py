@@ -12,8 +12,8 @@ sla_router = APIRouter()
 
 
 def _ensure_upload_dir() -> str:
-        upload_dir = "uploads_sla"
-        os.makedirs(upload_dir, exist_ok=True)
+    upload_dir = "uploads_sla"
+    os.makedirs(upload_dir, exist_ok=True)
     return upload_dir
 
 
@@ -32,22 +32,22 @@ async def upload_data_only(file: UploadFile = File(...)):
         if inner_ext != ".csv":
             raise HTTPException(status_code=400, detail="Only .csv.gz files are supported")
 
-            t_start = time.monotonic()
+        t_start = time.monotonic()
         target_path = os.path.join(upload_dir, "data1.csv")
-            try:
-                content = await file.read()
+        try:
+            content = await file.read()
             with gzip.open(io.BytesIO(content), "rb") as gz_file:
                 with open(target_path, "wb") as out_f:
-                        shutil.copyfileobj(gz_file, out_f, length=1024 * 1024)
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Failed to decompress and save CSV.GZ file: {e}")
+                    shutil.copyfileobj(gz_file, out_f, length=1024 * 1024)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to decompress and save CSV.GZ file: {e}")
 
         # track last processed filename (best-effort)
-            try:
+        try:
             with open(os.path.join(upload_dir, "processed_files.txt"), "w", encoding="utf-8") as f:
-                    f.write(f"{filename}\n")
-            except Exception:
-                pass
+                f.write(f"{filename}\n")
+        except Exception:
+            pass
 
         total_ms = int((time.monotonic() - t_start) * 1000)
         return JSONResponse(
@@ -116,7 +116,7 @@ async def upload_data_only(file: UploadFile = File(...)):
 def _convert_to_json_safe(df: pd.DataFrame):
     # Replace inf values and convert NaNs to None for JSON safety
     df = df.replace([pd.NA, float("inf"), float("-inf")], pd.NA)
-        records = df.to_dict(orient="records")
+    records = df.to_dict(orient="records")
     cleaned = []
     for rec in records:
         cleaned.append({k: (None if pd.isna(v) else v) for k, v in rec.items()})
@@ -126,27 +126,27 @@ def _convert_to_json_safe(df: pd.DataFrame):
 @sla_router.get("/api/get_csv_data/{filename}")
 async def get_csv_data(filename: str):
     # sanitize and only allow csv/xlsx/xls
-        filename = os.path.basename(filename)
+    filename = os.path.basename(filename)
     if not filename.endswith((".csv", ".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Invalid file type")
 
     file_path = os.path.join("uploads_sla", filename)
-        if not os.path.exists(file_path):
+    if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File '{filename}' not found")
-        
-        try:
+    
+    try:
         if filename.endswith(".csv"):
-                df = pd.read_csv(file_path)
+            df = pd.read_csv(file_path)
         else:
-                df = pd.read_excel(file_path)
-        except Exception as e:
+            df = pd.read_excel(file_path)
+    except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
-        
-        if df.empty:
+    
+    if df.empty:
         raise HTTPException(status_code=400, detail="File is empty or contains no data")
 
     records = _convert_to_json_safe(df)
-            return JSONResponse(
+    return JSONResponse(
         content={"filename": filename, "records": records, "total_rows": len(records), "columns": list(df.columns)}
     )
 

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.sla_apis import sla_router
 from api.sla_tabs_api import sla_tabs_router
+from api.ml_prediction_api import ml_prediction_router
 
 
 def create_app() -> FastAPI:
@@ -23,6 +24,7 @@ def create_app() -> FastAPI:
 
     app.include_router(sla_router)
     app.include_router(sla_tabs_router)
+    app.include_router(ml_prediction_router)
 
     return app
 
